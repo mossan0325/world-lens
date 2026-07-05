@@ -202,6 +202,17 @@ h3 {
   color: #923329;
 }
 
+.notice.info {
+  border-color: #9fdcc6;
+  background: #ecfaf4;
+  color: #0b5d43;
+}
+
+.notice.info a {
+  color: #0b5d43;
+  font-weight: 750;
+}
+
 code {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 12px;

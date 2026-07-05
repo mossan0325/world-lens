@@ -3,6 +3,10 @@
 World Lens は、世界各国の重要な変化を AI リサーチで収集し、国別ブリーフ・比較・出典付きで表示するデモアプリです。
 「普段のニュースでは出会えない国の変化に、受動的に出会う」ことを目的に、報道の少ない国を優先表示する仕組みを持ちます。
 
+**▶ ライブデモ: https://mossan0325.github.io/world-lens/**
+
+実際のAIリサーチ結果のスナップショットを、ブラウザだけで操作できます(地図ズーム・国別ブリーフ・ポップアップ・横断ダイジェスト・ソース多様性など。AIリサーチの実行のみ不可)。
+
 ## できること
 
 - 代表20か国の重要トピックを地図と一覧で確認できます。
@@ -80,6 +84,20 @@ npm run build
 npm run test
 npm run lint
 ```
+
+## 静的デモ(GitHub Pages)の更新
+
+ライブデモは `main` への push で自動デプロイされます(GitHub Actions)。表示データは `public/demo/latest.json` のスナップショットです。
+手元で新しいリサーチを実行した後、以下でデモのデータを更新できます。
+
+```powershell
+npm run export:demo     # SQLite から public/demo/latest.json を再生成
+git add public/demo/latest.json
+git commit -m "Update demo snapshot"
+git push                # push すると Pages が自動で再デプロイ
+```
+
+ローカルで静的デモの見た目を確認する場合は `npm run build:demo` → `npm run preview:demo`(http://localhost:4173/world-lens/)。
 
 ## 補足
 

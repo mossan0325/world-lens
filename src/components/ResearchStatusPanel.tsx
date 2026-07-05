@@ -1,5 +1,6 @@
 import type { LatestResponse, RunStatus } from '../../shared/types';
 import { formatRelativeTime } from '../lib/format';
+import { STATIC_DEMO } from '../lib/staticMode';
 
 type ResearchStatusPanelProps = {
   runStatus: RunStatus | null;
@@ -72,7 +73,9 @@ export function ResearchStatusPanel({ runStatus, latest }: ResearchStatusPanelPr
       {!isRunning && run?.error && failedNames.length === 0 && (
         <p className="status-note error">{run.error.slice(0, 160)}</p>
       )}
-      {!isRunning && !latest?.autoResearchTime && (
+      {STATIC_DEMO ? (
+        <p className="status-note">静的デモ版のため、リサーチ実行と自動更新は無効です。フル機能はREADMEの手順でローカル実行できます。</p>
+      ) : !isRunning && !latest?.autoResearchTime && (
         <p className="status-note">.env の RESEARCH_AUTO_TIME（例: 07:00）を設定すると毎日自動でリサーチします。</p>
       )}
     </section>

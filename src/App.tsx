@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Database,
   Globe2,
+  Info,
   Layers3,
   Newspaper,
   Play,
@@ -26,6 +27,7 @@ import { TopicDetailPanel } from './components/TopicDetailPanel';
 import { WorldMap } from './components/WorldMap';
 import { applyRareQuota, pickSpotlight, sortByDiscovery } from './lib/discovery';
 import { formatJapaneseDate, formatRelativeTime, isFresh } from './lib/format';
+import { REPO_URL, SNAPSHOT_URL, STATIC_DEMO } from './lib/staticMode';
 import { buildCountrySummaries } from './lib/summaries';
 import { loadViewedCountries, recordViewedCountry, viewedWithinDays } from './lib/viewedCountries';
 
@@ -48,6 +50,19 @@ function App() {
   const [focusCountryCode, setFocusCountryCode] = useState<string | null>(null);
 
   const refreshLatest = useCallback(async () => {
+    // 静的デモ(GitHub Pages)ではAPIの代わりに同梱スナップショットを読む。
+    if (STATIC_DEMO) {
+      const snapshotResponse = await fetch(SNAPSHOT_URL);
+      if (!snapshotResponse.ok) {
+        throw new Error('デモデータを読み込めませんでした。');
+      }
+      const snapshot = (await snapshotResponse.json()) as LatestResponse;
+      setCountries(snapshot.countries);
+      setLatest(snapshot);
+      setActiveUpdateId((current) => current ?? snapshot.updates[0]?.id ?? null);
+      return;
+    }
+
     const [countriesResponse, latestResponse] = await Promise.all([
       fetch('/api/countries'),
       fetch('/api/research/latest'),
@@ -224,6 +239,9 @@ function App() {
   const lastUpdatedIso = lastRun?.finished_at ?? lastRun?.started_at ?? null;
   const lastUpdatedRelative = formatRelativeTime(lastUpdatedIso);
   const dataFresh = isFresh(lastUpdatedIso, 24);
+  // 静的デモでは「◯日前」ではなくスナップショット日付を固定表示する(時間経過で警告色にならないように)。
+  const snapshotIso = STATIC_DEMO ? latest?.snapshot_generated_at ?? lastUpdatedIso : null;
+  const snapshotDateLabel = snapshotIso ? formatJapaneseDate(new Date(snapshotIso)) : null;
 
   async function startResearch() {
     setError(null);
@@ -301,9 +319,9 @@ function App() {
           <a href="#sources"><Database size={18} />出典</a>
         </nav>
         <div className="rail-status">
-          <span className={`status-dot ${dataFresh ? '' : 'stale'}`} />
+          <span className={`status-dot ${STATIC_DEMO || dataFresh ? '' : 'stale'}`} />
           <p>データ更新</p>
-          <strong>{lastUpdatedRelative ?? 'まだ実行なし'}</strong>
+          <strong>{STATIC_DEMO ? 'デモスナップショット' : lastUpdatedRelative ?? 'まだ実行なし'}</strong>
           <p className="rail-meter-label">今週の探索 {weeklyViewedCount}/{countries.length || '-'}か国</p>
           <div className="mini-meter">
             <span style={{ width: `${countries.length > 0 ? Math.round((weeklyViewedCount / countries.length) * 100) : 0}%` }} />
@@ -320,13 +338,14 @@ function App() {
           </div>
           <div className="top-actions">
             <span className="date-chip">{formatJapaneseDate(new Date())}</span>
-            <span className={`date-chip freshness-chip ${dataFresh ? 'fresh' : 'stale'}`}>
-              データ {lastUpdatedRelative ?? 'なし'}
+            <span className={`date-chip freshness-chip ${STATIC_DEMO || dataFresh ? 'fresh' : 'stale'}`}>
+              {STATIC_DEMO ? `スナップショット ${snapshotDateLabel ?? ''}` : `データ ${lastUpdatedRelative ?? 'なし'}`}
             </span>
             <button
               className="primary-action"
               type="button"
-              disabled={!apiKeyConfigured || isRunning}
+              disabled={STATIC_DEMO || !apiKeyConfigured || isRunning}
+              title={STATIC_DEMO ? '静的デモ版ではAIリサーチを実行できません' : undefined}
               onClick={() => {
                 startResearch().catch((startError: unknown) => {
                   setError(startError instanceof Error ? startError.message : String(startError));
@@ -334,13 +353,21 @@ function App() {
               }}
             >
               <Play size={16} />
-              {isRunning ? 'AIリサーチ中' : 'AIリサーチ開始'}
+              {STATIC_DEMO ? '静的デモ版' : isRunning ? 'AIリサーチ中' : 'AIリサーチ開始'}
               <ChevronRight size={16} />
             </button>
           </div>
         </header>
 
-        {!apiKeyConfigured && (
+        {STATIC_DEMO ? (
+          <section className="notice info" aria-live="polite">
+            <Info size={18} />
+            <span>
+              これは静的デモ版です（実際のAIリサーチ結果のスナップショットを表示）。AIリサーチの実行を含むフル機能は{' '}
+              <a href={REPO_URL} target="_blank" rel="noreferrer">GitHubリポジトリ</a> の手順でローカル実行できます。
+            </span>
+          </section>
+        ) : !apiKeyConfigured && (
           <section className="notice" aria-live="polite">
             <AlertTriangle size={18} />
             <span><code>.env</code> に <code>OPENAI_API_KEY</code> を設定してサーバーを再起動すると、実リサーチを開始できます。</span>

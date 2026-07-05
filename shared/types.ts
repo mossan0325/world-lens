@@ -95,6 +95,8 @@ export type LatestResponse = {
   updates: CountryUpdate[];
   synthesis: RunSynthesis | null;
   coverage: RunCountryCoverage[];
+  // 静的デモ(GitHub Pages)用スナップショットの生成日時。APIサーバーからの応答には含まれない。
+  snapshot_generated_at?: string;
 };
 
 export type ResearchRunRequest = {
