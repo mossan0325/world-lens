@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # Windowsで生成したlockfileはWASM系のオプション依存を欠くことがあり npm ci が失敗するため、
+      # デモ配信用途では npm install を使う(npm/cli#4828 の既知問題への回避策)。
+      - run: npm install
       - run: npm run build:demo
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
